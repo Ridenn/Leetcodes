@@ -1,8 +1,100 @@
 package LeetCode.Graph.UnionFind
 
+/*
+You start with an m x n grid that represents a map where all cells are initially water (represented by 0).
+You can perform operations to add land (represented by 1) to specific positions on this map.
+
+Given an array positions where positions[i] = [ri, ci] represents the coordinates where you want to add land in the i-th operation,
+you need to track how many islands exist after each operation.
+
+An island is defined as a group of adjacent land cells (1s) that are connected horizontally or vertically.
+Land cells that are only diagonally adjacent do not form the same island. The entire grid is surrounded by water.
+
+Your task is to return an array answer where answer[i] represents the total number of islands present in the grid after
+performing the i-th operation (adding land at position [ri, ci]).
+
+For example:
+
+    If you add land to an isolated water cell, you create a new island (island count increases by 1)
+    If you add land adjacent to existing land, you extend that island (island count stays the same)
+    If you add land between two or more separate islands, you connect them into one island (island count decreases)
+    If you try to add land to a position that's already land, nothing changes (island count stays the same)
+
+The solution uses a Union-Find data structure to efficiently track and merge islands as land is added.
+Each position in the grid is mapped to a unique index i * n + j for use in the union-find structure.
+When adding new land, the algorithm checks all four adjacent cells and merges connected components as needed,
+updating the island count accordingly.
+*/
+
 fun main() {
-    println(numberOfIslands2(3, 3, arrayOf(0 to 0, 0 to 1, 2 to 1)).contentToString()) // [1, 1, 2]
-    println(numberOfIslands2(3, 3, arrayOf(0 to 0, 0 to 1, 6 to 1)).contentToString()) // [] -> input inválido
+    println(numOfIslands2Remade(3, 3, arrayOf(0 to 0, 0 to 1, 2 to 1)).contentToString()) // [1, 1, 2]
+    println(numOfIslands2Remade(3, 3, arrayOf(0 to 0, 0 to 1, 6 to 1)).contentToString()) // [] -> input inválido
+}
+
+class UnionFind2(size: Int) {
+    val parent = IntArray(size) { it }
+
+    fun find(node: Int): Int {
+        if (parent[node] == node) return node
+        return find(parent[node])
+    }
+
+    fun unite(node1: Int, node2: Int): Boolean {
+        if (find(node1) == find(node2)) return false
+        parent[find(node1)] = find(node2)
+        return true
+    }
+}
+
+fun numOfIslands2Remade(m: Int, n: Int, positions: Array<Pair<Int, Int>>): IntArray {
+    val grid = Array(m) { IntArray(n) { 0 } }
+    val result = IntArray(positions.size) { 0 }
+    var numOfIslands = 0
+
+    val uf = UnionFind2(m * n)
+
+    val directions = arrayOf(-1 to 0, 1 to 0, 0 to -1, 0 to 1)
+
+    for (posIdx in positions.indices) {
+        val row = positions[posIdx].first
+        val col = positions[posIdx].second
+
+        if (
+            row !in 0 until m ||
+            col !in 0 until n
+        ) {
+            return intArrayOf()
+        }
+
+        if (grid[row][col] == 1) {
+            result[posIdx] = numOfIslands
+            continue
+        }
+
+        grid[row][col] = 1
+        numOfIslands++
+
+        for ((r, c) in directions) {
+            val newRow = row + r
+            val newCol = col + c
+
+            if (
+                newRow !in 0 until m ||
+                newCol !in 0 until n ||
+                grid[newRow][newCol] == 0
+            ) {
+                continue
+            }
+
+            val currentPosId = row * n + col
+            val neighPosId = newRow * n + col
+
+            if (uf.unite(currentPosId, neighPosId)) numOfIslands--
+        }
+
+        result[posIdx] = numOfIslands
+    }
+    return result
 }
 
 fun numberOfIslands2(m: Int, n: Int, positions: Array<Pair<Int, Int>>) : IntArray {

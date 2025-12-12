@@ -2,8 +2,39 @@ package LeetCode.Graph
 
 import java.lang.StringBuilder
 
+/*
+You're given a list of words from an alien language that uses the same 26 letters as English, but the alphabetical order of these letters is different and unknown to you.
+
+The words are claimed to be sorted in dictionary order according to this alien alphabet. Your task is to:
+
+    Verify if the claim is valid: Check if the given word order can actually correspond to some valid alphabetical ordering of letters.
+    If not, return an empty string "".
+
+    Recover the alien alphabet: If the ordering is valid, determine what the alphabetical order of letters must be in this alien
+    language and return it as a string containing all unique letters that appear in the words, sorted according to the alien alphabet's rules.
+
+Key Points:
+
+    The words should follow lexicographic ordering based on the alien alphabet (like how words are ordered in a dictionary)
+    You need to deduce the relative order of letters by comparing adjacent words in the list
+    If there are multiple valid orderings possible, return any one of them
+    If the given arrangement is impossible (contradicts itself), return ""
+
+Example of Invalid Input: If you have words like ["abc", "ab"], this would be invalid because in any alphabet,
+"abc" cannot come before "ab" in dictionary order (a longer word with the same prefix must come after the shorter word).
+
+Example of Deducing Order: If you have words ["wrt", "wrf"], you can deduce that 't' comes before 'f' in the alien alphabet
+since these words differ at the third position and "wrt" comes before "wrf".
+
+The solution uses topological sorting to build the alphabet order from the character relationships derived from comparing adjacent words.
+*/
+
 fun main() {
-    println(foreignDictionaryKahn(listOf("hrn","hrf","er","enn","rfnn")))
+    println(alienDictionary(listOf("hrn","hrf","er","enn","rfnn"))) // hernf
+    println(alienDictionary(listOf("hrfn","hrf","er","enn","rfnn"))) // ""
+    println(alienDictionary(listOf("z","x"))) // zx
+    println(alienDictionary(listOf("baa", "abcd", "abca", "cab", "cad"))) // bdac
+    println(alienDictionary(listOf("a", "b", "c"))) // abc
 }
 
 fun foreignDictionary(words: List<String>): String {
@@ -135,3 +166,66 @@ fun foreignDictionaryKahn(words: List<String>): String {
     // retornamos string vazia, senão retornamos o próprio result com a ordem correta
     return if (result.length != indegree.size) "" else result.toString()
 }
+
+fun alienDictionary(words: List<String>): String {
+    val graph = mutableMapOf<Char, MutableSet<Char>>()
+    val indegree = mutableMapOf<Char, Int>()
+
+    for (word in words) {
+        for (char in word) {
+            graph.getOrPut(char) { mutableSetOf() }
+            indegree.getOrPut(char) { 0 }
+        }
+    }
+
+    for (wIndex in 0 until words.size - 1) {
+        val word1 = words[wIndex]
+        val word2 = words[wIndex + 1]
+        val minLength = minOf(word1.length, word2.length)
+
+        if (word1.length > word2.length && word1.substring(0, minLength) == word2.substring(0, minLength)) return ""
+
+        for (index in 0 until minLength) {
+            if (word1[index] != word2[index]) {
+                if (word2[index] !in graph[word1[index]].orEmpty()) {
+                    graph[word1[index]]?.add(word2[index])
+                    indegree[word2[index]] = indegree.getOrDefault(word2[index], 0) + 1
+                }
+                break
+            }
+        }
+    }
+
+    val q = ArrayDeque<Char>()
+    for ((char, degree) in indegree) {
+        if (degree == 0) q.addLast(char)
+    }
+
+    var result = ""
+
+    while (q.isNotEmpty()) {
+        val currentChar = q.removeFirst()
+
+        result += currentChar
+
+        for (neighChar in graph[currentChar].orEmpty()) {
+            indegree[neighChar] = indegree.getOrDefault(neighChar, 0) - 1
+            if (indegree[neighChar] == 0) q.addLast(neighChar)
+        }
+    }
+
+    return result
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
