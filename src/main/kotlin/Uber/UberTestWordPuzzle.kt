@@ -150,10 +150,48 @@ fun findWordPuzzle3(grid: Array<CharArray>, word: String): Boolean {
     return false
 }
 
+fun findWordPuzzle4(grid: Array<CharArray>, word: String): Boolean {
+    val rows = grid.size
+    val cols = grid[0].size
+
+    val dirs = arrayOf(-1 to 0, 1 to 0, 0 to -1, 0 to 1, -1 to -1, 1 to 1, -1 to 1, 1 to -1)
+
+    fun dfs(row: Int, col: Int, index: Int, dirs: Array<Pair<Int, Int>>): Boolean {
+        if (index == word.length) return true
+
+        if (
+            row !in 0 until rows ||
+            col !in 0 until cols ||
+            grid[row][col] != word[index]
+        ) {
+            return false
+        }
+
+        for ((r, c) in dirs) {
+            val newRow = row + r
+            val newCol = col + c
+
+            val hasChar = dfs(newRow, newCol, index + 1, arrayOf(r to c))
+            if (hasChar) return true
+        }
+        return false
+    }
+
+    // O(m * n)
+    for (row in 0 until rows) { // O(m)
+        for (col in 0 until cols) { // O(n)
+            if (grid[row][col] == word[0]) {
+                if (dfs(row, col, 0, dirs)) return true
+            }
+        }
+    }
+    return false
+}
+
 fun main() {
     // true
     println(
-        findWordPuzzle3(arrayOf(
+        findWordPuzzle4(arrayOf(
         charArrayOf('A',  'U',  'I',  'K',  'F',  'W',  'N'),
         charArrayOf('W',  'Q',  'B',  'E',  'L' , 'X',  'P'),
         charArrayOf('T' , 'L',  'A',  'E',  'R',  'E',  'C'),
@@ -163,7 +201,7 @@ fun main() {
 
     // false
     println(
-        findWordPuzzle3(arrayOf(
+        findWordPuzzle4(arrayOf(
         charArrayOf('U',  'B'),
         charArrayOf('E',  'R'),
     ), "UBER")
